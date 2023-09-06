@@ -14,11 +14,22 @@ public class CallDetectorPlugin: CAPPlugin, CXCallObserverDelegate {
     private var enabled = false;
     private var activeListener = false;
 
+    private var lastData: [String: Any] = [
+        "callActive": false,
+        "callState": "IDLE"
+    ];
+
     @objc func echo(_ call: CAPPluginCall) {
         let value = call.getString("value") ?? ""
         call.resolve([
             "value": implementation.echo(value)
         ])
+    }
+
+    @objc func getLastCallState(_ call: CAPPluginCall){
+
+        lastData["calls"] = callObserver.calls.count;
+        call.resolve(lastData);
     }
 
     @objc func detectCallState(_ call: CAPPluginCall){
@@ -66,11 +77,13 @@ public class CallDetectorPlugin: CAPPlugin, CXCallObserverDelegate {
             callActive = false
         }
 
+        lastData = [
+            "callActive": callActive,
+            "callState": callState
+        ];
+
         if(activeListener){
-            notifyListeners("callStateChange", data: [
-                "callActive": callActive,
-                "callState": callState
-            ]);
+            notifyListeners("callStateChange", data: lastData);
         }
   }
 }
